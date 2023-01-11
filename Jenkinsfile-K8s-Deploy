@@ -1,0 +1,52 @@
+pipeline {
+    
+    agent any
+    
+    environment {
+        registryName = "klinikacr1"
+        registryUrl = "klinikacr1.azurecr.io"
+        registryCredential = "ACR"
+        dockerImage = ''
+    }
+    
+    stages {
+        
+        stage ('Checkout') {
+            steps {
+                checkout([$class: 'GitSCM', branches: [[name: '*/master']], extensions: [], userRemoteConfigs: [[url: 'https://github.com/eberejugwu/simplePythonApp']]])
+            }
+        }
+        
+        stage ('Build Docker image') {
+            steps {
+                script {
+                    dockerImage = docker.build registryName
+                }
+            }
+        }
+        
+        // Uploading Docker images into ACR
+        stage('Upload Image to ACR') {
+            steps{   
+                script {
+                    docker.withRegistry( "http://${registryUrl}", registryCredential ) {
+                    dockerImage.push()
+                }
+            }
+          }
+        }
+        
+        stage ('K8S Deploy') {
+            steps {
+                script {
+                    kubernetesDeploy(
+                        configs: 'k8s-deployment.yaml',
+                        kubeconfigId: 'AKS',
+                        enableConfigSubstitution: true
+                    )           
+                   
+                }
+            }
+        }
+    }
+}

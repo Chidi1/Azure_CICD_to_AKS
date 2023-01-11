@@ -1,2 +1,7 @@
-# Azure_CICD_to_AKS
-CICD to AKS with Grafana and Premetheus integration
+# myPythonDockerRepo
+This a containerized python based app.
+
+- Automating Docker image creation
+- Automating Docker image upload
+- Automating Docker container provisioning
+

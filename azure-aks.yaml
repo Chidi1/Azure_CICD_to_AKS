@@ -1,0 +1,114 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: schon-klinik-app
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: schon-klinik-app
+  template:
+    metadata:
+      labels:
+        app: schon-klinik-app
+    spec:
+      containers:
+      - name: schon-klinik-app
+        image: klinikacr1.azurecr.io/schonapp:scklinik
+        ports:
+        - containerPort: 5000
+# service type loadbalancer       
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: schon-klinik-app-svc
+spec:
+  selector:
+    app: schon-klinik-app
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000
+  type: LoadBalancer
+#Prometheus deployment
+---
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+  name: prom
+  labels:
+    app: prom
+spec:
+  selector:
+    matchLabels:
+      app: prom
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: prom
+    spec: 
+      containers:
+      - name: prom
+        image: prom/prometheus
+        ports:
+        - containerPort: 9090
+#Expose prometheus
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prom
+  labels:
+    app: prom
+spec:
+  selector:
+    app: prom
+  ports:
+    - protocol: TCP
+      port: 9090
+      targetPort: 9090
+  type: LoadBalancer
+#Grafana deployment
+---
+apiVersion: apps/v1 
+kind: Deployment
+metadata:
+  name: grafana
+  labels:
+    app: grafana
+spec:
+  selector:
+    matchLabels:
+      app: grafana
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec: 
+      containers:
+      - name: grafana
+        image: grafana/grafana
+        ports:
+        - containerPort: 3000
+#Expose Grafana
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: grafana
+  labels:
+    app: grafana
+spec:
+  selector:
+    app: grafana
+  ports:
+  - protocol: TCP
+    port: 3000
+    targetPort: 3000
+  type: LoadBalancer
+

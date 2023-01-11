@@ -1,0 +1,42 @@
+trigger:
+- main
+
+pool:
+  name: Azure Pipelines
+steps:
+- task: Docker@0
+  displayName: 'Build an image'
+  inputs:
+    containerregistrytype: 'Azure Container Registry'
+    azureSubscription: 'Azure subscription 1 (e6ef4365-1933-400b-b14b-23c21484392e)'
+    azureContainerRegistry: '{"loginServer":"klinikacr1.azurecr.io", "id" : "/subscriptions/e6ef4365-1933-400b-b14b-23c21484392e/resourceGroups/klinik-rg/providers/Microsoft.ContainerRegistry/registries/klinikacr1"}'
+    action: 'Build an image'
+    dockerFile: '**/Dockerfile'
+    imageName: '$(Build.Repository.Name):scklinik'
+
+- task: Docker@0
+  displayName: 'Push an image'
+  inputs:
+    containerregistrytype: 'Azure Container Registry'
+    azureSubscription: 'Azure subscription 1 (e6ef4365-1933-400b-b14b-23c21484392e)'
+    azureContainerRegistry: '{"loginServer":"klinikacr1.azurecr.io", "id" : "/subscriptions/e6ef4365-1933-400b-b14b-23c21484392e/resourceGroups/klinik-rg/providers/Microsoft.ContainerRegistry/registries/klinikacr1"}'
+    action: 'Push an image'
+    imageName: 'klinikacr1.azurecr.io/schonapp:scklinik'
+
+- task: CopyFiles@2
+  displayName: 'Copy Files to: $(build.artifactstagingdirectory)'
+  inputs:
+    Contents: '**'
+    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+    CleanTargetFolder: true
+    OverWrite: true
+  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Artifact: drop'
+  inputs:
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+    ArtifactName: 'drop'
+    publishLocation: 'Container'
+  condition: and(succeeded(), ne(variables['Build.Reason'], 'PullRequest'))
+
